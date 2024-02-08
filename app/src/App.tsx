@@ -8,6 +8,7 @@ import RollDiceModal from "./RollDiceModal";
 import StatFormModal from "./StatFormModal";
 import useWebSocket from "react-use-websocket";
 import {socket} from "./lib/socket";
+import JoinRoomModal from "./JoinRoomModal";
 
 export type PlayerStats = Map<number, { name: string, currentValue: number, default?: number }>;
 
@@ -20,6 +21,7 @@ export default function App() {
 	const [stats, setStats] = useState<PlayerStats>(defaultStats)
 	const [openStatForm, setOpenStatForm] = useState<boolean>(false)
 	const [openDiceForm, setOpenDiceForm] = useState<boolean>(false)
+	const [openJoinRoomForm, setOpenJoinRoomForm] = useState<boolean>(false)
 	const [rolledNumber, setRolledNumber] = useState<number>()
 	const [showSnackbar, setShowSnackbar] = useState<boolean>(false)
 	const [isConnected, setIsConnected] = useState(socket.connected);
@@ -41,6 +43,7 @@ export default function App() {
 
 		function onSendRoom(roomId: string) {
 			setCurrentRoom(roomId)
+			console.log(roomId)
 		}
 
 		socket.on('connect', onConnect);
@@ -55,6 +58,10 @@ export default function App() {
 			socket.off('send_room', onSendRoom)
 		};
 	}, []);
+
+	const joinRoom = (roomId: string) => {
+		socket.emit('join_room', roomId);
+	}
 
 	useEffect(() => {
 		if (rolledNumber) {
@@ -71,12 +78,15 @@ export default function App() {
 	const hideStatFormModal = () => setOpenStatForm(false);
 	const showDiceFormModal = () => setOpenDiceForm(true);
 	const hideDiceFormModal = () => setOpenDiceForm(false);
+	const showJoinRoomModal = () => setOpenJoinRoomForm(true);
+	const hideJoinRoomModal = () => setOpenJoinRoomForm(false);
 
 
 	const actions = (
 		<>
 			<IconButton icon={'plus'} onPress={showStatFormModal}/>
 			<IconButton icon={'dice-multiple'} onPress={showDiceFormModal}/>
+			<IconButton icon={'door'} onPress={showJoinRoomModal}/>
 		</>
 	)
 
@@ -87,6 +97,7 @@ export default function App() {
 						   openStatForm={openStatForm}/>
 			<RollDiceModal openDiceForm={openDiceForm} hideDiceFormModal={hideDiceFormModal}
 						   setRolledNumber={setRolledNumber}/>
+			<JoinRoomModal open={openJoinRoomForm} close={hideJoinRoomModal} joinRoom={joinRoom}/>
 			<Snackbar visible={showSnackbar} onDismiss={() => setShowSnackbar(false)}>
 				<Text style={{color: "white"}}>Rolled Number: {rolledNumber}</Text>
 			</Snackbar>

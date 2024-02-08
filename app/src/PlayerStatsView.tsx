@@ -3,6 +3,7 @@ import {Card, IconButton} from "react-native-paper";
 import {GestureResponderEvent, Text} from "react-native";
 import {ReactNode, useEffect, useState} from "react";
 import {PlayerStats} from "./App";
+import * as Clipboard from 'expo-clipboard';
 
 export interface PlayerStatsViewProps {
 	actions: ReactNode
@@ -92,6 +93,14 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
 		}
 	}
 
+	const copyToClipboard = async () => {
+        try {
+			await Clipboard.setStringAsync(currentRoom||'')
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
+
 	return (
 		<Card
 			style={{
@@ -104,7 +113,7 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
 			onTouchStart={(e) => setFirstSwipeCoordinate({x: e.nativeEvent.pageX, y: e.nativeEvent.pageY})}
 			onTouchEnd={determineSwipeDirection}
 		>
-			<Card.Title title={'Player'} style={{height: "10%"}} subtitle={<Text>Current Room: {currentRoom}</Text>}/>
+			<Card.Title title={'Player'} style={{height: "10%"}} subtitle={<Text>Current Room: <IconButton icon={'information-outline'} onPress={copyToClipboard}/> </Text>}/>
 			<Card.Content style={{height: "80%", display: "flex", alignItems: "center"}}>
 				<Text style={{fontSize: 64}}>{stats.get(currentStat)?.currentValue}</Text>
 				<Text>{stats.get(currentStat)?.name}</Text>

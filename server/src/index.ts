@@ -23,12 +23,14 @@ io.on("connection", (socket) => {
 	socket.join(newRoomId)
 
 	socket.on("join_room", (room: string) => {
+		console.log("Join Room")
 		socket.join(room);
 		socket.rooms.forEach((roomId) => {
 			if (roomId !== room) {
 				socket.leave(roomId)
 			}
 		})
+		socket.emit("send_room", room);
     });
 });
 
