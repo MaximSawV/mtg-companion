@@ -6,7 +6,6 @@ import {IconButton, Snackbar} from "react-native-paper";
 import PlayerStatsView from "./PlayerStatsView";
 import RollDiceModal from "./RollDiceModal";
 import StatFormModal from "./StatFormModal";
-import useWebSocket from "react-use-websocket";
 import {socket} from "./lib/socket";
 import JoinRoomModal from "./JoinRoomModal";
 

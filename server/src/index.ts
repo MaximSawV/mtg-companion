@@ -8,7 +8,7 @@ const server = createServer();
 const io = new Server(server, { /* options */ });
 
 const clients = new Map<string, Socket>();
-const rooms: string[] = []
+const rooms = new Map<string, {clientId: string, role: 'MASTER'|'PLAYER'}[]>
 
 io.on("connection", (socket) => {
 	const uuid = v4();
@@ -17,12 +17,15 @@ io.on("connection", (socket) => {
 	console.log(`${uuid} is connected`);
 
 	const newRoomId = v4();
-	rooms.push(newRoomId);
+	rooms.set(newRoomId, [{clientId: uuid, role: 'MASTER'}])
 
 	socket.emit("send_room", newRoomId);
-	socket.join(newRoomId)
+	socket.join(newRoomId);
+});
 
-	socket.on("join_room", (room: string) => {
+io.on("join_room", (clientId: string, room: string) => {
+	const socket = clients.get(clientId)
+	if (socket) {
 		console.log("Join Room")
 		socket.join(room);
 		socket.rooms.forEach((roomId) => {
@@ -31,7 +34,7 @@ io.on("connection", (socket) => {
 			}
 		})
 		socket.emit("send_room", room);
-    });
+	}
 });
 
 server.listen(port, () => {
