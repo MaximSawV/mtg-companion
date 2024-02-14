@@ -1,0 +1,16 @@
+services:
+
+  node_server:
+    build: ./server
+    ports:
+      - 8000:8000
+    command: npm run dev
+    volumes:
+      - ./server:/var/srv
+
+  redis_server:
+    image: redis:alpine
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - 6379:6379

@@ -11,7 +11,7 @@ export default function RollDiceModal(props: RollDiceModalProps) {
 
 	const { setRolledNumber, openDiceForm, hideDiceFormModal } = props;
 
-	const [diceSize, setDiceSize] = useState<number>()
+	const [diceSize, setDiceSize] = useState<number>(0)
 
 	const rollDice = () => {
 		if (diceSize) {
@@ -31,7 +31,7 @@ export default function RollDiceModal(props: RollDiceModalProps) {
 					<TextInput
 						label={"Dice Sides"}
 						value={diceSize?.toString()}
-						onChange={text => setDiceSize(parseInt(text.nativeEvent.text))}
+						onChange={text => setDiceSize(parseInt(text.nativeEvent.text.replace(/[^0-9]/g, '')))}
 					/>
 				</Card.Content>
 				<Card.Actions>

@@ -1,6 +1,6 @@
 import {Button, Card, Modal, TextInput} from "react-native-paper";
 import {useState} from "react";
-import {PlayerStats} from "./App";
+import {PlayerStats} from "../../App";
 
 export interface StatFormModalProps {
 	stats: PlayerStats
@@ -14,7 +14,7 @@ export default function StatFormModal(props: StatFormModalProps) {
 	const { stats, setStats, hideStatFormModal, openStatForm } = props;
 
 	const [newStatName, setNewStatName] = useState<string>('')
-	const [newStatCurrentValue, setNewStatCurrentValue] = useState<number>()
+	const [newStatCurrentValue, setNewStatCurrentValue] = useState<number>(0)
 	const [newStatDefaultValue, setNewStatDefaultValue] = useState<number>()
 
 	const addNewStat = () => {
@@ -28,7 +28,7 @@ export default function StatFormModal(props: StatFormModalProps) {
 			updatedStats.set(stats.size, newStat);
 			setStats(updatedStats);
 			setNewStatName('');
-			setNewStatCurrentValue(undefined);
+			setNewStatCurrentValue(0);
 			setNewStatDefaultValue(undefined);
 			hideStatFormModal();
 		}

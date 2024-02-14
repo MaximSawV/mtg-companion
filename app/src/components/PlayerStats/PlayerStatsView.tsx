@@ -1,8 +1,8 @@
-import {Styles} from "./styles";
+import {Styles} from "../../styles";
 import {Card, IconButton} from "react-native-paper";
-import {GestureResponderEvent, Text} from "react-native";
+import {GestureResponderEvent, Text, View} from "react-native";
 import {ReactNode, useEffect, useState} from "react";
-import {PlayerStats} from "./App";
+import {PlayerStats} from "../../App";
 import * as Clipboard from 'expo-clipboard';
 
 export interface PlayerStatsViewProps {
@@ -10,11 +10,13 @@ export interface PlayerStatsViewProps {
 	stats: PlayerStats
 	setStats: (stats: PlayerStats) => void
 	currentRoom: string|undefined;
+	myTurn: boolean
+	playerName: string
 }
 
 export default function PlayerStatsView(props: PlayerStatsViewProps) {
 
-	const {actions, stats, setStats, currentRoom} = props;
+	const {actions, stats, setStats, currentRoom, myTurn, playerName} = props;
 
 	const [firstSwipeCoordinate, setFirstSwipeCoordinate] = useState<{ x: number, y: number }>({x: 0, y: 0})
 	const [currentStat, setCurrentStat] = useState<number>(0)
@@ -113,12 +115,13 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
 			onTouchStart={(e) => setFirstSwipeCoordinate({x: e.nativeEvent.pageX, y: e.nativeEvent.pageY})}
 			onTouchEnd={determineSwipeDirection}
 		>
-			<Card.Title title={'Player'} style={{height: "10%"}} subtitle={<Text>Current Room: <IconButton icon={'information-outline'} onPress={copyToClipboard}/> </Text>}/>
-			<Card.Content style={{height: "80%", display: "flex", alignItems: "center"}}>
+			<Card.Title title={playerName} subtitle={currentRoom ?`In Room: ${currentRoom}` : null}/>
+			<Card.Content style={{height: "80%", display: "flex", alignItems: "center", borderWidth: 15, borderRadius: 30, borderColor: currentRoom ? myTurn ? "lime" : "red" : "white"}}>
 				<Text style={{fontSize: 64}}>{stats.get(currentStat)?.currentValue}</Text>
 				<Text>{stats.get(currentStat)?.name}</Text>
 			</Card.Content>
 			<Card.Actions style={{...Styles.centerVH, display: "flex"}}>
+				<IconButton icon={'information-outline'} onPress={copyToClipboard}/>
 				<IconButton icon={isCommander ? "shield-outline" : "sword-cross"} onPress={toggleIsCommander}/>
 				<IconButton icon={'reload'} onPress={() => resetPoints(currentStat)}/>
 				{actions}
