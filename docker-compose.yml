@@ -1,12 +1,12 @@
 services:
 
-  node_server:
-    build: ./server
-    ports:
-      - 8000:8000
-    command: npm run dev
-    volumes:
-      - ./server:/var/srv
+#  node_server:
+#    build: ./server
+#    ports:
+#      - 8000:8000
+#    command: npm run dev
+#    volumes:
+#      - ./server:/var/srv
 
   redis_server:
     image: redis:alpine
@@ -14,3 +14,12 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
+
+  postgres_db_server:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+      POSTGRES_USER: admin
+    ports:
+      - 5432:5432

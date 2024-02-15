@@ -10,6 +10,7 @@ import {socket} from "./lib/socket";
 import JoinRoomModal from "./components/Modals/JoinRoomModal";
 import {LogBox} from 'react-native';
 import JoinRequestModal from "./components/Modals/JoinRequestModal";
+import MasterMask from "./components/MasterMask/MasterMask";
 
 LogBox.ignoreLogs(['Animated.event now requires a second argument for options']);
 
@@ -33,6 +34,8 @@ export default function App() {
 	const [myTurn, setMyTurn] = useState(false)
 	const [joinRequest, setJoinRequest] = useState<{id: string, name: string}>()
 	const [playerName, setPlayerName] = useState<string>('')
+	const [role, setRole] = useState<string>()
+	const [masterView, setMasterView] = useState<boolean>(false)
 
 	useEffect(() => {
 		function onConnectError(err: Error) {
@@ -47,10 +50,11 @@ export default function App() {
 			setIsConnected(false);
 		}
 
-		function onSendRoom({roomId, name}: {roomId: string, name: string}) {
+		function onSendRoom({roomId, name, role}: {roomId: string, name: string, role: string}) {
 			setCurrentRoom(roomId)
 			setPlayerName(name)
-			console.log(name)
+			setRole(role)
+			console.log(role)
 		}
 
 		function onIsYourTurn(isMyTurn: boolean) {
@@ -119,13 +123,21 @@ export default function App() {
 			<IconButton icon={'plus'} onPress={showStatFormModal}/>
 			<IconButton icon={'dice-multiple'} onPress={showDiceFormModal}/>
 			<IconButton icon={'door'} onPress={showJoinRoomModal}/>
+			{role === "MASTER" && (
+				<IconButton icon={'crown'} onPress={() => setMasterView(true)}/>
+			)}
 		</>
 	)
 
 	return (
 		<View style={ComponentsStyles.AppMainView}>
-			<PlayerStatsView actions={actions} setStats={setStats} stats={stats} currentRoom={currentRoom}
-							 myTurn={myTurn} playerName={playerName}/>
+			{ !masterView && (
+				<PlayerStatsView actions={actions} setStats={setStats} stats={stats} currentRoom={currentRoom}
+								 myTurn={myTurn} playerName={playerName} role={role}/>
+			)}
+			{ masterView && (
+				<MasterMask setMasterView={setMasterView} />
+			)}
 			<StatFormModal stats={stats} setStats={setStats} hideStatFormModal={hideStatFormModal}
 						   openStatForm={openStatForm}/>
 			<RollDiceModal openDiceForm={openDiceForm} hideDiceFormModal={hideDiceFormModal}

@@ -1,5 +1,5 @@
 import {Styles} from "../../styles";
-import {Card, IconButton} from "react-native-paper";
+import {Card, Icon, IconButton} from "react-native-paper";
 import {GestureResponderEvent, Text, View} from "react-native";
 import {ReactNode, useEffect, useState} from "react";
 import {PlayerStats} from "../../App";
@@ -9,14 +9,23 @@ export interface PlayerStatsViewProps {
 	actions: ReactNode
 	stats: PlayerStats
 	setStats: (stats: PlayerStats) => void
-	currentRoom: string|undefined;
+	currentRoom?: string;
 	myTurn: boolean
 	playerName: string
+	role?: string
 }
 
 export default function PlayerStatsView(props: PlayerStatsViewProps) {
 
-	const {actions, stats, setStats, currentRoom, myTurn, playerName} = props;
+	const {
+		actions,
+		stats,
+		setStats,
+		currentRoom,
+		myTurn,
+		playerName,
+		role
+	} = props;
 
 	const [firstSwipeCoordinate, setFirstSwipeCoordinate] = useState<{ x: number, y: number }>({x: 0, y: 0})
 	const [currentStat, setCurrentStat] = useState<number>(0)
@@ -102,6 +111,11 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
             console.error('Failed to copy text: ', err);
         }
     };
+	const renderPlayerName = () => {
+		return (
+			<Card.Title title={<Text>{playerName} {role === "MASTER" ? <Icon size={16} source={'crown'}/> : null}</Text>} subtitle={currentRoom ?`In Room: ${currentRoom}` : null}/>
+		)
+	}
 
 	return (
 		<Card
@@ -115,7 +129,7 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
 			onTouchStart={(e) => setFirstSwipeCoordinate({x: e.nativeEvent.pageX, y: e.nativeEvent.pageY})}
 			onTouchEnd={determineSwipeDirection}
 		>
-			<Card.Title title={playerName} subtitle={currentRoom ?`In Room: ${currentRoom}` : null}/>
+			{renderPlayerName()}
 			<Card.Content style={{height: "80%", display: "flex", alignItems: "center", borderWidth: 15, borderRadius: 30, borderColor: currentRoom ? myTurn ? "lime" : "red" : "white"}}>
 				<Text style={{fontSize: 64}}>{stats.get(currentStat)?.currentValue}</Text>
 				<Text>{stats.get(currentStat)?.name}</Text>

@@ -1,11 +1,13 @@
-import { v4 } from 'uuid';
-import { createServer } from "http";
+import {v4} from 'uuid';
+import {createServer} from "http";
 import {Server, Socket} from "socket.io";
 import Redis from "ioredis";
+import {Player, JoinRequestAnswer} from "./types";
+import {sendPlayersInRoom} from "./lib/functions";
 
 const port = 8000;
 const clients = new Map<string, Socket>();
-const rooms = new Map<string, {clientId: string, role: 'MASTER'|'PLAYER', playerName: string}[]>
+const rooms = new Map<string, Player[]>
 
 // REDIS
 const redisClient = new Redis(6379, "redis_server")
@@ -20,14 +22,15 @@ redisClient.on('error', (e) => {
 
 // SOCKET.IO
 const server = createServer();
-const io = new Server(server, { /* options */ });
+const io = new Server(server, { /* options */});
+
+
 
 io.on("connection", (socket) => {
-	const uuid = v4();
-	clients.set(uuid, socket)
-	socket.data.id = uuid;
 
-	console.log(`${uuid} is connected`);
+
+	redisClient.set()
+	socket.data.id = uuid;
 
 	socket.on("disconnect", (reason, description) => {
 		console.log(`${reason.toString()} ${description}`)
@@ -38,29 +41,24 @@ io.on("connection", (socket) => {
 		const {roomId, playerName} = request
 
 		if (socket) {
-			console.log("Join Room")
-
-			if(io.sockets.adapter.rooms.get(roomId)) {
-				console.log("Send join request")
+			if (io.sockets.adapter.rooms.get(roomId)) {
 				rooms.get(roomId)?.forEach((player) => {
 					if (player.role === "MASTER") {
-						const roomMaster = clients.get(player.clientId);
+						const roomMaster = clients.get(player.id);
 						roomMaster?.emit("join_request:player_to_master", {id: socket.data.id, name: playerName});
 					}
 				})
 			} else {
-				console.log("Create Room")
 				socket.join(roomId)
-				rooms.set(roomId, [{clientId: socket.data.id, role: "MASTER", playerName: playerName}])
-				socket.emit('send_room', {roomId: roomId, name: playerName})
+				rooms.set(roomId, [{id: socket.data.id, role: "MASTER", name: playerName, roomId}])
+				socket.emit('send_room', {roomId: roomId, name: playerName, role: "MASTER"})
 			}
 		}
 	});
 
-	socket.on("join_request:master_to_player", (answer: {accepted: boolean, clientId: string, name: string, room: string}) => {
-		const player = clients.get(answer.clientId)
+	socket.on("join_request:master_to_player", (answer: JoinRequestAnswer) => {
+		const player = clients.get(answer.userId)
 
-		console.log(`Got answer: ${answer}`)
 		if (player) {
 			if (answer.accepted) {
 				player.join(answer.room);
@@ -69,15 +67,20 @@ io.on("connection", (socket) => {
 						player.leave(roomId);
 					}
 				});
-				console.log("Answer was accepted")
-				player.emit('send_room', {roomId: answer.room, name: answer.name});
+				rooms.get(answer.room)?.push({id: socket.data.id, role: "PLAYER", name: answer.name, roomId: answer.room});
+				player.emit('send_room', {roomId: answer.room, name: answer.name, role: "PLAYER"});
+				sendPlayersInRoom(socket, rooms);
 			} else {
-				console.log("Answer was denied")
 				player.emit("join_request_rejected");
 			}
 		} else {
-			console.log(`Player: ${answer.clientId} does not exist`)
+			console.error(`Player: ${answer.userId} does not exist`)
 		}
+	})
+
+	socket.on('getPlayers', () => {
+		console.log("Sending players")
+		sendPlayersInRoom(socket, rooms);
 	})
 });
 
