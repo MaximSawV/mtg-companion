@@ -2,7 +2,7 @@ import {StatusBar} from 'expo-status-bar';
 import {Text, View} from 'react-native';
 import {ComponentsStyles} from "./styles";
 import {useEffect, useState} from "react";
-import {IconButton, Snackbar} from "react-native-paper";
+import {Appbar, IconButton, Snackbar} from "react-native-paper";
 import PlayerStatsView from "./components/PlayerStats/PlayerStatsView";
 import RollDiceModal from "./components/Modals/RollDiceModal";
 import StatFormModal from "./components/Modals/StatFormModal";
@@ -11,6 +11,8 @@ import JoinRoomModal from "./components/Modals/JoinRoomModal";
 import {LogBox} from 'react-native';
 import JoinRequestModal from "./components/Modals/JoinRequestModal";
 import MasterMask from "./components/MasterMask/MasterMask";
+import useUserContext from "./lib/user-context/hooks/UseUserContext";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 LogBox.ignoreLogs(['Animated.event now requires a second argument for options']);
 
@@ -22,6 +24,8 @@ const defaultStats: PlayerStats = new Map([
 
 export default function App() {
 
+	const {setUser, user} = useUserContext();
+
 	const [stats, setStats] = useState<PlayerStats>(defaultStats)
 	const [openStatForm, setOpenStatForm] = useState<boolean>(false)
 	const [openDiceForm, setOpenDiceForm] = useState<boolean>(false)
@@ -30,12 +34,11 @@ export default function App() {
 	const [rolledNumber, setRolledNumber] = useState<number>()
 	const [showSnackbar, setShowSnackbar] = useState<boolean>(false)
 	const [isConnected, setIsConnected] = useState(socket.connected);
-	const [currentRoom, setCurrentRoom] = useState<string>()
 	const [myTurn, setMyTurn] = useState(false)
-	const [joinRequest, setJoinRequest] = useState<{id: string, name: string}>()
-	const [playerName, setPlayerName] = useState<string>('')
-	const [role, setRole] = useState<string>()
+	const [joinRequest, setJoinRequest] = useState<{ id: string, name: string }>()
 	const [masterView, setMasterView] = useState<boolean>(false)
+
+	const { bottom } = useSafeAreaInsets();
 
 	useEffect(() => {
 		function onConnectError(err: Error) {
@@ -46,23 +49,27 @@ export default function App() {
 			setIsConnected(true);
 		}
 
+		function onSendId(id: string) {
+			setUser({id})
+		}
+
 		function onDisconnect() {
 			setIsConnected(false);
 		}
 
-		function onSendRoom({roomId, name, role}: {roomId: string, name: string, role: string}) {
-			setCurrentRoom(roomId)
-			setPlayerName(name)
-			setRole(role)
-			console.log(role)
+		function onSendRoom({roomId, name, role}: { roomId: string, name: string, role: string }) {
+			if (user) {
+				setUser({...user, name, roomId, role})
+			} else {
+				console.log('User does not exist')
+			}
 		}
 
 		function onIsYourTurn(isMyTurn: boolean) {
 			setMyTurn(isMyTurn)
 		}
 
-		function onJoinRequest(request: {id: string, name: string}) {
-			console.log(`Join request from ${request.name}`)
+		function onJoinRequest(request: { id: string, name: string }) {
 			setOpenJoinRequestModal(true)
 			setJoinRequest(request)
 		}
@@ -72,6 +79,7 @@ export default function App() {
 		}
 
 		socket.on('connect', onConnect);
+		socket.on('sendId', onSendId)
 		socket.on('connect_error', onConnectError);
 		socket.on('disconnect', onDisconnect);
 		socket.on('send_room', onSendRoom)
@@ -93,9 +101,9 @@ export default function App() {
 		socket.emit('join_room', {roomId: roomId, playerName: playerName});
 	}
 
-	const answerJoinRequest = (answer: { accepted: boolean, clientId: string, name: string }) => {
+	const answerJoinRequest = (answer: { accepted: boolean, userId: string, name: string, room: string }) => {
 		console.log('Sending answer')
-		socket.emit('join_request:master_to_player', {...answer, room: currentRoom})
+		socket.emit('join_request:master_to_player', answer)
 	}
 
 	useEffect(() => {
@@ -117,27 +125,34 @@ export default function App() {
 	const hideJoinRoomModal = () => setOpenJoinRoomForm(false);
 	const hideJoinRequestModal = () => setOpenJoinRequestModal(false);
 
-
-	const actions = (
-		<>
-			<IconButton icon={'plus'} onPress={showStatFormModal}/>
-			<IconButton icon={'dice-multiple'} onPress={showDiceFormModal}/>
-			<IconButton icon={'door'} onPress={showJoinRoomModal}/>
-			{role === "MASTER" && (
-				<IconButton icon={'crown'} onPress={() => setMasterView(true)}/>
-			)}
-		</>
-	)
-
 	return (
 		<View style={ComponentsStyles.AppMainView}>
-			{ !masterView && (
-				<PlayerStatsView actions={actions} setStats={setStats} stats={stats} currentRoom={currentRoom}
-								 myTurn={myTurn} playerName={playerName} role={role}/>
+			<Appbar.Header>
+				<Appbar.Content title={user.name ?? user.id}/>
+			</Appbar.Header>
+			{!masterView && (
+				<PlayerStatsView setStats={setStats} stats={stats} myTurn={myTurn}/>
 			)}
-			{ masterView && (
-				<MasterMask setMasterView={setMasterView} />
+			{masterView && (
+				<MasterMask setMasterView={setMasterView}/>
 			)}
+
+			<Appbar
+				style={{backgroundColor: 'aquamarine',
+					position: 'absolute',
+					left: 0,
+					right: 0,
+					bottom: 0,}}
+				safeAreaInsets={{bottom}}
+			>
+				<Appbar.Action icon={'plus'} onPress={showStatFormModal}/>
+				<Appbar.Action icon={'dice-multiple'} onPress={showDiceFormModal}/>
+				<Appbar.Action icon={'door'} onPress={showJoinRoomModal}/>
+				{user?.role === "MASTER" && (
+					<Appbar.Action icon={'crown'} onPress={() => setMasterView(true)}/>
+				)}
+			</Appbar>
+			<StatusBar/>
 			<StatFormModal stats={stats} setStats={setStats} hideStatFormModal={hideStatFormModal}
 						   openStatForm={openStatForm}/>
 			<RollDiceModal openDiceForm={openDiceForm} hideDiceFormModal={hideDiceFormModal}
@@ -148,7 +163,6 @@ export default function App() {
 			<Snackbar visible={showSnackbar} onDismiss={() => setShowSnackbar(false)}>
 				<Text style={{color: "white"}}>Rolled Number: {rolledNumber}</Text>
 			</Snackbar>
-			<StatusBar/>
 		</View>
 	);
 }

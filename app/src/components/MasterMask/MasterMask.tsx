@@ -2,6 +2,7 @@ import {Card, IconButton} from "react-native-paper";
 import {SectionList, Text} from "react-native";
 import {useEffect, useState} from "react";
 import {socket} from "../../lib/socket";
+import useUserContext from "../../lib/user-context/hooks/UseUserContext";
 
 interface MasterMaskProps {
 	setMasterView: (boolean: boolean) => void
@@ -15,6 +16,7 @@ interface Player {
 export default function MasterMask(props: MasterMaskProps) {
 
 	const [players, setPlayers] = useState<Map<string, Player>>(new Map())
+	const {user} = useUserContext();
 
 	useEffect(() => {
 
@@ -42,7 +44,7 @@ export default function MasterMask(props: MasterMaskProps) {
 	}, []);
 
 	useEffect(() => {
-		socket.emit('getPlayers')
+		socket.emit('getPlayers', {roomId: user.roomId})
 	}, []);
 
 	const renderPlayers = () => {

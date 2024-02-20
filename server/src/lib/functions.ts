@@ -6,8 +6,8 @@ export function sendPlayersInRoom(socket: Socket, rooms: Map<string, Player[]>) 
 	if (currentRoom) {
 		const players = currentRoom.map(player => {
 			return {
-				name: player.playerName,
-				id: player.clientId
+				name: player.name,
+				id: player.id
 			};
 		});
 		socket.emit('sendPlayers', players);

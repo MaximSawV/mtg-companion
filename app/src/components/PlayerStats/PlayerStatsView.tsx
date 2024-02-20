@@ -4,28 +4,23 @@ import {GestureResponderEvent, Text, View} from "react-native";
 import {ReactNode, useEffect, useState} from "react";
 import {PlayerStats} from "../../App";
 import * as Clipboard from 'expo-clipboard';
+import useUserContext from "../../lib/user-context/hooks/UseUserContext";
 
 export interface PlayerStatsViewProps {
-	actions: ReactNode
 	stats: PlayerStats
 	setStats: (stats: PlayerStats) => void
-	currentRoom?: string;
 	myTurn: boolean
-	playerName: string
-	role?: string
 }
 
 export default function PlayerStatsView(props: PlayerStatsViewProps) {
 
 	const {
-		actions,
 		stats,
 		setStats,
-		currentRoom,
 		myTurn,
-		playerName,
-		role
 	} = props;
+
+	const {user} = useUserContext();
 
 	const [firstSwipeCoordinate, setFirstSwipeCoordinate] = useState<{ x: number, y: number }>({x: 0, y: 0})
 	const [currentStat, setCurrentStat] = useState<number>(0)
@@ -105,20 +100,35 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
 	}
 
 	const copyToClipboard = async () => {
-        try {
-			await Clipboard.setStringAsync(currentRoom||'')
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
-        }
-    };
-	const renderPlayerName = () => {
-		return (
-			<Card.Title title={<Text>{playerName} {role === "MASTER" ? <Icon size={16} source={'crown'}/> : null}</Text>} subtitle={currentRoom ?`In Room: ${currentRoom}` : null}/>
-		)
-	}
+		try {
+			await Clipboard.setStringAsync(user?.roomId || '')
+		} catch (err) {
+			console.error('Failed to copy text: ', err);
+		}
+	};
 
 	return (
 		<Card
+			style={{
+				borderRadius: 30,
+				borderWidth: 15,
+				borderColor: user?.roomId ? myTurn ? "lime" : "red" : "white",
+				marginHorizontal: 5,
+				display: 'flex',
+				alignItems: 'center'
+			}}
+			onTouchStart={(e) => setFirstSwipeCoordinate({x: e.nativeEvent.pageX, y: e.nativeEvent.pageY})}
+			onTouchEnd={determineSwipeDirection}
+		>
+			<Card.Title title={stats.get(currentStat)?.name} />
+			<Card.Content>
+				<Text style={{fontSize: 64}}>{stats.get(currentStat)?.currentValue}</Text>
+			</Card.Content>
+		</Card>
+	)
+}
+
+/*<Card
 			style={{
 				...Styles.full,
 				paddingTop: "10%",
@@ -129,17 +139,20 @@ export default function PlayerStatsView(props: PlayerStatsViewProps) {
 			onTouchStart={(e) => setFirstSwipeCoordinate({x: e.nativeEvent.pageX, y: e.nativeEvent.pageY})}
 			onTouchEnd={determineSwipeDirection}
 		>
-			{renderPlayerName()}
-			<Card.Content style={{height: "80%", display: "flex", alignItems: "center", borderWidth: 15, borderRadius: 30, borderColor: currentRoom ? myTurn ? "lime" : "red" : "white"}}>
+			<Card.Content style={{
+				height: "80%",
+				display: "flex",
+				alignItems: "center",
+				borderWidth: 15,
+				borderRadius: 30,
+				borderColor: user?.roomId ? myTurn ? "lime" : "red" : "white"
+			}}>
 				<Text style={{fontSize: 64}}>{stats.get(currentStat)?.currentValue}</Text>
 				<Text>{stats.get(currentStat)?.name}</Text>
 			</Card.Content>
-			<Card.Actions style={{...Styles.centerVH, display: "flex"}}>
+			{/!*<Card.Actions style={{...Styles.centerVH, display: "flex"}}>
 				<IconButton icon={'information-outline'} onPress={copyToClipboard}/>
 				<IconButton icon={isCommander ? "shield-outline" : "sword-cross"} onPress={toggleIsCommander}/>
 				<IconButton icon={'reload'} onPress={() => resetPoints(currentStat)}/>
-				{actions}
-			</Card.Actions>
-		</Card>
-	)
-}
+			</Card.Actions>*!/}
+		</Card>*/

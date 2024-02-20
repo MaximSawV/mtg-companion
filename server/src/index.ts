@@ -10,7 +10,7 @@ const clients = new Map<string, Socket>();
 const rooms = new Map<string, Player[]>
 
 // REDIS
-const redisClient = new Redis(6379, "redis_server")
+/*const redisClient = new Redis(6379, "redis_server")
 
 redisClient.on('connect', () => {
 	console.log('connected')
@@ -18,19 +18,24 @@ redisClient.on('connect', () => {
 
 redisClient.on('error', (e) => {
 	console.log(e.message)
-})
+})*/
 
 // SOCKET.IO
 const server = createServer();
-const io = new Server(server, { /* options */});
-
-
+const io = new Server(server, {
+	cors: {
+		origin: '*',
+		methods: ["GET", "POST"]
+	}
+});
 
 io.on("connection", (socket) => {
 
+	socket.data = {id: v4()};
+	clients.set(socket.data.id, socket);
+	console.log(socket.data.id)
 
-	redisClient.set()
-	socket.data.id = uuid;
+	socket.emit('sendId', socket.data.id);
 
 	socket.on("disconnect", (reason, description) => {
 		console.log(`${reason.toString()} ${description}`)
@@ -40,26 +45,30 @@ io.on("connection", (socket) => {
 
 		const {roomId, playerName} = request
 
-		if (socket) {
-			if (io.sockets.adapter.rooms.get(roomId)) {
-				rooms.get(roomId)?.forEach((player) => {
-					if (player.role === "MASTER") {
-						const roomMaster = clients.get(player.id);
-						roomMaster?.emit("join_request:player_to_master", {id: socket.data.id, name: playerName});
-					}
-				})
-			} else {
-				socket.join(roomId)
-				rooms.set(roomId, [{id: socket.data.id, role: "MASTER", name: playerName, roomId}])
-				socket.emit('send_room', {roomId: roomId, name: playerName, role: "MASTER"})
-			}
+		socket.data.playerName = playerName;
+
+		if (io.sockets.adapter.rooms.get(roomId)) {
+			rooms.get(roomId)?.forEach((player) => {
+				if (player.role === "MASTER") {
+					const roomMaster = clients.get(player.id);
+					roomMaster?.emit("join_request:player_to_master", {id: socket.data.id, name: playerName});
+				}
+			})
+		} else {
+			socket.join(roomId)
+			console.log('Player created Room')
+			rooms.set(roomId, [{id: socket.data.id, role: "MASTER", name: playerName, roomId}])
+			socket.emit('send_room', {roomId: roomId, name: playerName, role: "MASTER"})
 		}
 	});
 
 	socket.on("join_request:master_to_player", (answer: JoinRequestAnswer) => {
 		const player = clients.get(answer.userId)
 
+		console.log(answer)
+
 		if (player) {
+			socket.data.playerName = answer.name;
 			if (answer.accepted) {
 				player.join(answer.room);
 				player.rooms.forEach((roomId) => {
@@ -78,9 +87,13 @@ io.on("connection", (socket) => {
 		}
 	})
 
-	socket.on('getPlayers', () => {
+	socket.on('getPlayers', (answer: {roomId?: string}) => {
 		console.log("Sending players")
-		sendPlayersInRoom(socket, rooms);
+		if (answer.roomId) {
+			socket.emit('sendPlayers', rooms.get(answer.roomId));
+		} else {
+			console.error('RoomId was not given')
+		}
 	})
 });
 

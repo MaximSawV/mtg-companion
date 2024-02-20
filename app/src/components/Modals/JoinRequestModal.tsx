@@ -1,24 +1,27 @@
 import {Button, Card, Modal} from "react-native-paper";
+import useUserContext from "../../lib/user-context/hooks/UseUserContext";
 
 export interface JoinRequestModalProps {
 	open: boolean;
 	close: () => void
 	clientId?: {id: string, name: string}
-	answerJoinRequest: (answer: {accepted: boolean, clientId: string, name: string}) => void
+	answerJoinRequest: (answer: { accepted: boolean, userId: string, name: string, room: string }) => void
 }
 
 export default function JoinRequestModal(props: JoinRequestModalProps) {
 
+	const {user} = useUserContext();
+
 	const deny = () => {
-		if (props.clientId) {
-			props.answerJoinRequest({accepted: false, clientId: props.clientId.id, name: props.clientId.name})
+		if (props.clientId && user?.roomId) {
+			props.answerJoinRequest({accepted: false, userId: props.clientId.id, name: props.clientId.name, room: user.roomId})
 		}
 		props.close()
 	}
 
 	const accept = () => {
-		if (props.clientId) {
-			props.answerJoinRequest({accepted: true, clientId: props.clientId.id, name: props.clientId.name})
+		if (props.clientId && user?.roomId) {
+			props.answerJoinRequest({accepted: true, userId: props.clientId.id, name: props.clientId.name, room: user.roomId})
 		} else {
 			console.log('client id not found')
 		}
