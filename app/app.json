@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "MTG-Companion",
+    "slug": "mtg-companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,11 +21,18 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.maxim_0306.mtg_companion.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "entryPoint": "./Main.tsx"
+    "entryPoint": "./Main.tsx",
+    "extra": {
+      "eas": {
+        "projectId": "a77d6a42-6fc8-47d5-b612-7ab6dc952363"
+      }
+    },
+    "owner": "maxim_0306"
   }
 }
