@@ -6,12 +6,13 @@ export interface StatFormModalProps {
 	stats: PlayerStats
 	setStats: (playerStats: PlayerStats) => void
 	hideStatFormModal: () => void
-	openStatForm: boolean
+	openStatForm: boolean,
+	isCommanderDamage: boolean,
 }
 
 export default function StatFormModal(props: StatFormModalProps) {
 
-	const { stats, setStats, hideStatFormModal, openStatForm } = props;
+	const { stats, setStats, hideStatFormModal, openStatForm, isCommanderDamage } = props;
 
 	const [newStatName, setNewStatName] = useState<string>('')
 	const [newStatCurrentValue, setNewStatCurrentValue] = useState<number>(0)
@@ -34,31 +35,43 @@ export default function StatFormModal(props: StatFormModalProps) {
 		}
 	}
 
+	const close = () => {
+		setNewStatName('')
+		setNewStatCurrentValue(0)
+		setNewStatDefaultValue(0)
+		hideStatFormModal()
+	}
+
 	return (
 		<Modal
 			visible={openStatForm}
-			onDismiss={hideStatFormModal}
+			onDismiss={close}
 		>
 			<Card>
 				<Card.Content>
 					<TextInput
-						label={"Stat Name"}
+						label={isCommanderDamage ? 'Commander' : "Stat Name"}
 						value={newStatName}
 						onChange={text => setNewStatName(text.nativeEvent.text)}
 					/>
-					<TextInput
-						label={"Current Value"}
-						value={newStatCurrentValue?.toString()}
-						onChange={text => setNewStatCurrentValue(parseInt(text.nativeEvent.text))}
-					/>
-					<TextInput
-						label={"Default Value"}
-						value={newStatDefaultValue?.toString()}
-						onChange={text => setNewStatDefaultValue(parseInt(text.nativeEvent.text))}
-					/>
+					{!isCommanderDamage && (
+						<>
+							<TextInput
+								label={"Current Value"}
+								value={newStatCurrentValue?.toString()}
+								onChange={text => setNewStatCurrentValue(parseInt(text.nativeEvent.text))}
+								autoFocus={true}
+							/>
+							<TextInput
+								label={"Default Value"}
+								value={newStatDefaultValue?.toString()}
+								onChange={text => setNewStatDefaultValue(parseInt(text.nativeEvent.text))}
+							/>
+						</>
+					)}
 				</Card.Content>
 				<Card.Actions>
-					<Button onPress={addNewStat}> Add Stat </Button>
+					<Button onPress={addNewStat}> Add {isCommanderDamage ? 'Commander' : 'Stat'} </Button>
 				</Card.Actions>
 			</Card>
 		</Modal>

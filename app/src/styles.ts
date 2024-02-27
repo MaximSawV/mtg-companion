@@ -21,6 +21,7 @@ export const ComponentsStyles = StyleSheet.create({
 	AppMainView: {
 		...Styles.full,
 		flex: 1,
+		alignItems: 'center'
 	},
 	AppAddPlayerButton: {
 		position: 'absolute',

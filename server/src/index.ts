@@ -90,6 +90,7 @@ io.on("connection", (socket) => {
 	socket.on('getPlayers', (answer: {roomId?: string}) => {
 		console.log("Sending players")
 		if (answer.roomId) {
+			console.log(rooms.get(answer.roomId))
 			socket.emit('sendPlayers', rooms.get(answer.roomId));
 		} else {
 			console.error('RoomId was not given')
